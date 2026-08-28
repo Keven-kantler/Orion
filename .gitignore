@@ -1,0 +1,25 @@
+﻿# Ambiente virtual
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Credenciais e autenticação
+.env
+.spotify_cache
+
+# Dados locais do Orion
+notes/
+Orion Memory/
+
+# Cache e logs
+.cache/
+*.log
+
+# IDE / sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
