@@ -1,78 +1,78 @@
-﻿# Orion
+# Orion
 
-Assistente de inteligÃªncia artificial local desenvolvido em Python para Windows.
+Assistente de inteligência artificial local desenvolvido em Python para Windows.
 
-O Orion combina reconhecimento de voz, modelos de linguagem executados localmente, roteamento de intenÃ§Ãµes, memÃ³ria e automaÃ§Ãµes para permitir interaÃ§Ã£o por voz com o computador e serviÃ§os integrados.
+O Orion combina reconhecimento de voz, modelos de linguagem executados localmente, roteamento de intenções, memória e automações para permitir interação por voz com o computador e serviços integrados.
 
-> Projeto em desenvolvimento e utilizado como ambiente de estudo e experimentaÃ§Ã£o com IA local, automaÃ§Ã£o e processamento de linguagem natural.
+> Projeto em desenvolvimento e utilizado como ambiente de estudo e experimentação com IA local, automação e processamento de linguagem natural.
 
 ## Funcionalidades
 
 - Reconhecimento de voz com Whisper
-- AtivaÃ§Ã£o manual ou por wake word
-- DetecÃ§Ã£o de "Hey Jarvis" com OpenWakeWord
-- SessÃ£o de conversa apÃ³s a ativaÃ§Ã£o por voz
+- Ativação manual ou por wake word
+- Detecção de "Hey Jarvis" com OpenWakeWord
+- Sessão de conversa após a ativação por voz
 - Processamento local com Ollama
 - Modelo principal Qwen 2.5 7B
 - Modelo auxiliar Qwen 2.5 1.5B para roteamento
-- Roteamento de intenÃ§Ãµes
-- MemÃ³ria e contexto de conversa
-- Sistema de anotaÃ§Ãµes
+- Roteamento de intenções
+- Memória e contexto de conversa
+- Sistema de anotações
 - Busca na web
-- IntegraÃ§Ã£o com Spotify
-- Abertura de aplicativos e pÃ¡ginas
+- Integração com Spotify
+- Abertura de aplicativos e páginas
 - Controle de volume do Windows
 - Respostas por voz
-- Camada de seguranÃ§a para bloquear aÃ§Ãµes potencialmente perigosas
+- Camada de segurança para bloquear ações potencialmente perigosas
 
 ## Arquitetura
 
-O Orion utiliza diferentes componentes para separar reconhecimento de voz, interpretaÃ§Ã£o, execuÃ§Ã£o de comandos e geraÃ§Ã£o de respostas.
+O Orion utiliza diferentes componentes para separar reconhecimento de voz, interpretação, execução de comandos e geração de respostas.
 
 Fluxo simplificado:
 
 ```text
 Microfone
-   â†“
-Wake Word / AtivaÃ§Ã£o manual
-   â†“
+   ↓
+Wake Word / Ativação manual
+   ↓
 Whisper (Speech-to-Text)
-   â†“
-Roteamento de intenÃ§Ã£o
-   â†“
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ Comando / AutomaÃ§Ã£o  â”‚ Conversa / Pergunta  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-           â†“                      â†“
-     ExecuÃ§Ã£o local          Ollama / Qwen
-           â†“                      â†“
-           â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                      â†“
+   ↓
+Roteamento de intenção
+   ↓
+┌──────────────────────┬──────────────────────┐
+│ Comando / Automação  │ Conversa / Pergunta  │
+└──────────┬───────────┴──────────┬───────────┘
+           ↓                      ↓
+     Execução local          Ollama / Qwen
+           ↓                      ↓
+           └──────────┬───────────┘
+                      ↓
                  Resposta
-                      â†“
+                      ↓
                     TTS
 ```
 
-## Principais mÃ³dulos
+## Principais módulos
 
 ```text
-main.py                   InicializaÃ§Ã£o e fluxo principal
-audio_recorder.py         Captura de Ã¡udio
-stt.py                    TranscriÃ§Ã£o com Whisper
-wakeword_openwakeword.py  DetecÃ§Ã£o da palavra de ativaÃ§Ã£o
-intent_router.py          Roteamento inicial de intenÃ§Ãµes
-ai_router.py              Roteamento semÃ¢ntico
-brain.py                  IntegraÃ§Ã£o com o modelo de linguagem
-commands.py               ExecuÃ§Ã£o de comandos
-safety.py                 ValidaÃ§Ã£o de aÃ§Ãµes potencialmente perigosas
-memory_manager.py         Gerenciamento da memÃ³ria
-memory_analyzer.py        AnÃ¡lise de informaÃ§Ãµes para memÃ³ria
-notes.py                  Sistema de anotaÃ§Ãµes
-spotify_controller.py     IntegraÃ§Ã£o com Spotify
-tv_controller.py          IntegraÃ§Ã£o experimental com TV
+main.py                   Inicialização e fluxo principal
+audio_recorder.py         Captura de áudio
+stt.py                    Transcrição com Whisper
+wakeword_openwakeword.py  Detecção da palavra de ativação
+intent_router.py          Roteamento inicial de intenções
+ai_router.py              Roteamento semântico
+brain.py                  Integração com o modelo de linguagem
+commands.py               Execução de comandos
+safety.py                 Validação de ações potencialmente perigosas
+memory_manager.py         Gerenciamento da memória
+memory_analyzer.py        Análise de informações para memória
+notes.py                  Sistema de anotações
+spotify_controller.py     Integração com Spotify
+tv_controller.py          Integração experimental com TV
 web_search.py             Busca na web
-tts.py                    ConversÃ£o de texto em voz
-config.py                 ConfiguraÃ§Ãµes do projeto
+tts.py                    Conversão de texto em voz
+config.py                 Configurações do projeto
 ```
 
 ## Modelos
@@ -85,11 +85,11 @@ Router:       qwen2.5:1.5b
 Whisper:      medium
 ```
 
-Os modelos Qwen sÃ£o executados localmente atravÃ©s do Ollama.
+Os modelos Qwen são executados localmente através do Ollama.
 
 ## Requisitos
 
-Antes de executar o projeto, Ã© necessÃ¡rio ter:
+Antes de executar o projeto, é necessário ter:
 
 - Python
 - Ollama
@@ -103,9 +103,9 @@ ollama pull qwen2.5:7b
 ollama pull qwen2.5:1.5b
 ```
 
-## InstalaÃ§Ã£o
+## Instalação
 
-Clone o repositÃ³rio:
+Clone o repositório:
 
 ```powershell
 git clone https://github.com/Keven-kantler/Orion.git
@@ -124,15 +124,15 @@ Ative o ambiente:
 .\venv\Scripts\Activate.ps1
 ```
 
-Instale as dependÃªncias:
+Instale as dependências:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-## ConfiguraÃ§Ã£o
+## Configuração
 
-O projeto utiliza variÃ¡veis de ambiente para manter configuraÃ§Ãµes locais e credenciais fora do cÃ³digo.
+O projeto utiliza variáveis de ambiente para manter configurações locais e credenciais fora do código.
 
 Copie `.env.example` para `.env`:
 
@@ -140,7 +140,7 @@ Copie `.env.example` para `.env`:
 Copy-Item .env.example .env
 ```
 
-Exemplo de configuraÃ§Ã£o:
+Exemplo de configuração:
 
 ```env
 ORION_HOME=
@@ -160,7 +160,7 @@ ROKU_TV_IP=
 ROKU_TV_PORT=8060
 ```
 
-O arquivo `.env` contÃ©m configuraÃ§Ãµes locais e credenciais e nÃ£o deve ser enviado ao repositÃ³rio.
+O arquivo `.env` contém configurações locais e credenciais e não deve ser enviado ao repositório.
 
 ## Executando
 
@@ -170,7 +170,7 @@ Com o ambiente virtual ativado:
 python main.py
 ```
 
-## Modos de ativaÃ§Ã£o
+## Modos de ativação
 
 ### Wake word
 
@@ -186,11 +186,11 @@ Diga:
 Hey Jarvis
 ```
 
-ApÃ³s detectar a palavra de ativaÃ§Ã£o, o Orion comeÃ§a a ouvir o comando.
+Após detectar a palavra de ativação, o Orion começa a ouvir o comando.
 
-A gravaÃ§Ã£o Ã© encerrada automaticamente apÃ³s detectar silÃªncio.
+A gravação é encerrada automaticamente após detectar silêncio.
 
-Depois da primeira interaÃ§Ã£o, uma sessÃ£o de conversa pode continuar sem exigir a wake word novamente a cada frase.
+Depois da primeira interação, uma sessão de conversa pode continuar sem exigir a wake word novamente a cada frase.
 
 ### Manual
 
@@ -200,11 +200,11 @@ Para utilizar o modo manual:
 MODO_ATIVACAO=manual
 ```
 
-Nesse modo, a interaÃ§Ã£o pode ser iniciada manualmente pelo teclado.
+Nesse modo, a interação pode ser iniciada manualmente pelo teclado.
 
 ## Spotify
 
-Para utilizar a integraÃ§Ã£o com Spotify, configure suas prÃ³prias credenciais no arquivo `.env`:
+Para utilizar a integração com Spotify, configure suas próprias credenciais no arquivo `.env`:
 
 ```env
 SPOTIFY_CLIENT_ID=
@@ -212,11 +212,11 @@ SPOTIFY_CLIENT_SECRET=
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:8888/callback
 ```
 
-Na primeira autenticaÃ§Ã£o, o navegador poderÃ¡ ser aberto para autorizar o acesso Ã  conta.
+Na primeira autenticação, o navegador poderá ser aberto para autorizar o acesso à conta.
 
-Os tokens de autenticaÃ§Ã£o sÃ£o armazenados localmente no arquivo `.spotify_cache`, que nÃ£o deve ser enviado ao Git. O controlador utiliza esse arquivo local para o cache da autenticaÃ§Ã£o.
+Os tokens de autenticação são armazenados localmente no arquivo `.spotify_cache`, que não deve ser enviado ao Git. O controlador utiliza esse arquivo local para o cache da autenticação.
 
-Alguns recursos de reproduÃ§Ã£o atravÃ©s da API do Spotify podem exigir Spotify Premium.
+Alguns recursos de reprodução através da API do Spotify podem exigir Spotify Premium.
 
 ## Exemplos de comandos
 
@@ -225,8 +225,8 @@ Hey Jarvis
 
 Abra o Spotify
 Toque Back in Black
-Pause a mÃºsica
-Qual mÃºsica estÃ¡ tocando?
+Pause a música
+Qual música está tocando?
 
 Abra o YouTube
 Abra o Discord
@@ -235,58 +235,57 @@ Abra a calculadora
 Aumente o volume
 Diminua o volume
 
-Pesquise sobre inteligÃªncia artificial
+Pesquise sobre inteligência artificial
 
-Crie uma anotaÃ§Ã£o dizendo que hoje testei o Orion
+Crie uma anotação dizendo que hoje testei o Orion
 
-Que horas sÃ£o?
+Que horas são?
 ```
 
-O Orion tambÃ©m pode responder perguntas gerais utilizando o modelo de linguagem local.
+O Orion também pode responder perguntas gerais utilizando o modelo de linguagem local.
 
-## MemÃ³ria e contexto
+## Memória e contexto
 
-O Orion possui um sistema experimental de memÃ³ria que permite manter informaÃ§Ãµes Ãºteis entre interaÃ§Ãµes.
+O Orion possui um sistema experimental de memória que permite manter informações úteis entre interações.
 
-Os dados de memÃ³ria sÃ£o armazenados localmente e nÃ£o fazem parte do repositÃ³rio pÃºblico.
+Os dados de memória são armazenados localmente e não fazem parte do repositório público.
 
-As pastas utilizadas para memÃ³ria e anotaÃ§Ãµes locais estÃ£o incluÃ­das no `.gitignore`.
+As pastas utilizadas para memória e anotações locais estão incluídas no `.gitignore`.
 
-## SeguranÃ§a
+## Segurança
 
-O projeto possui uma camada de seguranÃ§a para impedir a execuÃ§Ã£o automÃ¡tica de determinadas aÃ§Ãµes potencialmente perigosas.
+O projeto possui uma camada de segurança para impedir a execução automática de determinadas ações potencialmente perigosas.
 
-Entre as aÃ§Ãµes bloqueadas estÃ£o operaÃ§Ãµes como:
+Entre as ações bloqueadas estão operações como:
 
 - desligar ou reiniciar o computador;
 - excluir arquivos ou pastas;
-- executar comandos arbitrÃ¡rios no terminal;
-- executar scripts arbitrÃ¡rios;
-- finalizar processos de maneira forÃ§ada.
+- executar comandos arbitrários no terminal;
+- executar scripts arbitrários;
+- finalizar processos de maneira forçada.
 
-Credenciais, tokens, memÃ³ria, anotaÃ§Ãµes e outros dados locais sÃ£o mantidos fora do repositÃ³rio atravÃ©s do `.gitignore` e de variÃ¡veis de ambiente.
+Credenciais, tokens, memória, anotações e outros dados locais são mantidos fora do repositório através do `.gitignore` e de variáveis de ambiente.
 
-## LimitaÃ§Ãµes
+## Limitações
 
-O Orion ainda estÃ¡ em desenvolvimento.
+O Orion ainda está em desenvolvimento.
 
 Algumas funcionalidades podem depender de:
 
 - qualidade do microfone;
 - desempenho do hardware;
 - disponibilidade dos modelos locais;
-- conexÃ£o com a internet para serviÃ§os externos;
-- APIs e serviÃ§os de terceiros.
+- conexão com a internet para serviços externos;
+- APIs e serviços de terceiros.
 
-O reconhecimento de voz e os modelos de linguagem sÃ£o executados localmente, enquanto recursos como busca web e Spotify dependem de serviÃ§os externos.
+O reconhecimento de voz e os modelos de linguagem são executados localmente, enquanto recursos como busca web e Spotify dependem de serviços externos.
 
 ## Status
 
 Projeto experimental em desenvolvimento ativo.
 
-O objetivo atual Ã© explorar uma arquitetura modular para assistentes locais, combinando IA generativa, reconhecimento de voz, memÃ³ria, roteamento de intenÃ§Ãµes e automaÃ§Ã£o.
+O objetivo atual é explorar uma arquitetura modular para assistentes locais, combinando IA generativa, reconhecimento de voz, memória, roteamento de intenções e automação.
 
 ## Autor
 
 Keven Kantler
-
