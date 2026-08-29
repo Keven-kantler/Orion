@@ -852,7 +852,8 @@ def parece_conversa(texto):
     # Se aparecerem no começo da fala, deixamos o router decidir a ação.
     prefixos_acao = (
         "abre ", "abra ", "abrir ",
-        "fecha ", "feche ", "fechar ",
+        "fecha ", "feche ", "fecho ", "fechar ",
+        "encerra ", "encerre ", "encerro ", "encerrar ",
         "toca ", "toque ", "tocar ",
         "coloca ", "coloque ", "bota ", "bote ", "manda ",
         "pausa ", "pause ", "continua ", "continue ",
@@ -916,6 +917,14 @@ def parece_conversa(texto):
     )
 
     if texto_norm.startswith(prefixos_conversa):
+        return True
+
+    falas_sociais = {
+        "obrigado", "obrigada", "valeu", "brigado", "brigada",
+        "bom dia", "boa tarde", "boa noite", "ate mais", "falou",
+    }
+
+    if texto_norm in falas_sociais:
         return True
 
     # O Whisper pode remover o ponto de interrogação. Pronomes e
@@ -1867,4 +1876,3 @@ def detectar_intencao_musical(texto):
             )
 
     return None
-

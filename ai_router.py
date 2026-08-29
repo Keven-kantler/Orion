@@ -899,7 +899,8 @@ def parece_conversa(texto):
     # Se aparecerem no começo da fala, deixamos o router decidir a ação.
     prefixos_acao = (
         "abre ", "abra ", "abrir ",
-        "fecha ", "feche ", "fechar ",
+        "fecha ", "feche ", "fecho ", "fechar ",
+        "encerra ", "encerre ", "encerro ", "encerrar ",
         "toca ", "toque ", "tocar ",
         "coloca ", "coloque ", "bota ", "bote ", "manda ",
         "pausa ", "pause ", "continua ", "continue ",
@@ -965,6 +966,14 @@ def parece_conversa(texto):
     if texto_norm.startswith(prefixos_conversa):
         return True
 
+    falas_sociais = {
+        "obrigado", "obrigada", "valeu", "brigado", "brigada",
+        "bom dia", "boa tarde", "boa noite", "ate mais", "falou",
+    }
+
+    if texto_norm in falas_sociais:
+        return True
+
     # Continuação curta pode vir sem interrogação porque o Whisper nem
     # sempre preserva a pontuação da fala.
     if re.match(
@@ -984,6 +993,34 @@ def parece_conversa(texto):
     # conversa. A checagem de ação acima impede o falso positivo mais
     # perigoso do comportamento antigo.
     return str(texto or "").strip().endswith("?")
+
+
+def texto_autoriza_operacao_memoria(texto, intent):
+    """Exige evidência explícita antes de aceitar intents que alteram memória."""
+    texto_norm = normalizar_com_espacos(texto)
+
+    if intent == "apagar_memoria":
+        gatilhos = (
+            "esqueca", "esquece", "apague", "apaga", "delete", "deleta",
+            "remova", "remove", "tire da memoria", "apague da memoria",
+        )
+        return any(gatilho in texto_norm for gatilho in gatilhos)
+
+    if intent == "atualizar_memoria":
+        gatilhos = (
+            "corrija", "corrige", "mude", "muda", "altere", "altera",
+            "atualize", "atualiza", "troque", "troca",
+        )
+        return any(gatilho in texto_norm for gatilho in gatilhos)
+
+    if intent == "salvar_memoria":
+        gatilhos = (
+            "lembre", "lembra", "memorize", "memoriza", "guarde", "guarda",
+            "salve na memoria", "salva na memoria",
+        )
+        return any(gatilho in texto_norm for gatilho in gatilhos)
+
+    return True
 
 
 # =========================================================
@@ -1489,6 +1526,75 @@ def detectar_memoria_rapida(texto):
 # AI ROUTER
 # =========================================================
 
+
+
+def parece_continuacao_conversacional(texto, contexto_anterior):
+    """
+    Detecta complementos curtos que fazem sentido apenas junto do turno
+    anterior, sem transformar comandos explícitos em conversa.
+
+    A regra é estrutural: exige contexto recente, fala curta e ausência de
+    verbos/formatos típicos de comando. Isso cobre correções e complementos
+    como "queria comparar com Python" sem depender de uma lista de assuntos.
+    """
+    if not contexto_anterior:
+        return False
+
+    texto_norm = normalizar_com_espacos(texto)
+    palavras = texto_norm.split()
+
+    if not palavras or len(palavras) > 12:
+        return False
+
+    # Não rouba comandos explícitos do restante do router.
+    comandos = (
+        "abre", "abrir", "fecha", "feche", "fecho", "fechar",
+        "toca", "toque", "tocar", "coloca", "coloque", "pausa",
+        "pare", "para", "continua", "continue", "aumenta",
+        "diminui", "muta", "desmuta", "pesquisa", "procura",
+        "busca", "anota", "salva", "apaga", "esquece",
+    )
+
+    if palavras[0] in comandos:
+        return False
+
+    marcadores = (
+        "eu queria", "queria", "eu quis", "quis", "quis dizer",
+        "eu quis dizer", "na verdade", "era", "seria", "com ",
+        "sobre ", "nesse caso", "isso", "esse", "essa", "ele",
+        "ela", "e ", "mas ", "entao ",
+    )
+
+    return any(
+        texto_norm == marcador.strip()
+        or texto_norm.startswith(marcador)
+        for marcador in marcadores
+    )
+
+
+def parece_pedido_comparacao(texto):
+    """
+    Detecta pedidos explícitos de comparação como conversa.
+
+    Essa regra roda antes dos caminhos de memória para impedir que frases
+    como "eu queria comparar Java com Python" sejam reinterpretadas como
+    consulta de memória pelo fallback semântico.
+    """
+    texto_norm = normalizar_com_espacos(texto)
+
+    if not texto_norm:
+        return False
+
+    padroes = (
+        r"\bcomparar\b",
+        r"\bcompare\b",
+        r"\bcompara\b",
+        r"\bcomparacao\b",
+        r"\bdiferenca entre\b",
+    )
+
+    return any(re.search(padrao, texto_norm) for padrao in padroes)
+
 class AIRouter:
     """Roteador híbrido: regras rápidas primeiro e LLM como fallback semântico."""
 
@@ -1642,6 +1748,17 @@ class AIRouter:
             return atualizacao_contextual
 
         # -----------------------------------------------------
+        # CAMINHO RÁPIDO PARA COMPARAÇÕES
+        # -----------------------------------------------------
+
+        if parece_pedido_comparacao(texto):
+            print("Router rápido: comparação/conversa")
+            return {
+                "intent": "conversar",
+                "parameters": {},
+            }
+
+        # -----------------------------------------------------
         # CAMINHO RÁPIDO PARA ATUALIZAR MEMÓRIA
         # -----------------------------------------------------
 
@@ -1716,6 +1833,13 @@ class AIRouter:
         # -----------------------------------------------------
         # CAMINHO RÁPIDO PARA CONVERSA
         # -----------------------------------------------------
+
+        if parece_continuacao_conversacional(texto, contexto_anterior):
+            print("Router rápido: continuação de conversa")
+            return {
+                "intent": "conversar",
+                "parameters": {},
+            }
 
         if parece_conversa(texto):
             print(
@@ -1810,6 +1934,24 @@ class AIRouter:
             consulta = parameters.get(
                 "consulta"
             )
+
+            # -------------------------------------------------
+            # PROTEÇÃO CONTRA OPERAÇÕES DE MEMÓRIA INVENTADAS
+            # -------------------------------------------------
+
+            if intent in {
+                "salvar_memoria",
+                "atualizar_memoria",
+                "apagar_memoria",
+            } and not texto_autoriza_operacao_memoria(texto, intent):
+                print(
+                    "AI Router bloqueou operação de memória sem "
+                    f"pedido explícito: {intent}"
+                )
+                return {
+                    "intent": "nao_entendi",
+                    "parameters": {},
+                }
 
             # -------------------------------------------------
             # PROTEÇÃO CONTRA ALUCINAÇÃO

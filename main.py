@@ -41,6 +41,7 @@ def processar_audio_gravado(
     brain,
     spotify,
     speaker,
+    texto_pretranscrito=None,
 ):
     """
     Processa um áudio gravado.
@@ -57,11 +58,15 @@ def processar_audio_gravado(
 
     print("Processando áudio...")
 
-    try:
-        texto = transcriber.transcrever_audio(audio)
-    except Exception as erro:
-        _registrar_erro("transcrição do áudio", erro)
-        return False
+    if texto_pretranscrito:
+        texto = str(texto_pretranscrito).strip()
+        print("Usando transcrição já validada no fim da fala.")
+    else:
+        try:
+            texto = transcriber.transcrever_audio(audio)
+        except Exception as erro:
+            _registrar_erro("transcrição do áudio", erro)
+            return False
 
     if not texto:
         print("Não entendi nada útil.")
@@ -177,8 +182,9 @@ def executar_sessao_conversa(
         print("Aguardando próximo comando...")
 
         try:
-            audio = recorder.gravar_ate_silencio(
-                deve_bloquear=speaker.esta_falando
+            audio, texto_pretranscrito = recorder.gravar_ate_silencio(
+                deve_bloquear=speaker.esta_falando,
+                transcrever_parcial=transcriber.transcrever_audio,
             )
         except Exception as erro:
             _registrar_erro("gravação da sessão de conversa", erro)
@@ -197,6 +203,7 @@ def executar_sessao_conversa(
             brain,
             spotify,
             speaker,
+            texto_pretranscrito=texto_pretranscrito,
         )
 
         if not comando_processado:
@@ -221,8 +228,9 @@ def executar_modo_wakeword(
         print("Gravando comando...")
 
         try:
-            audio = recorder.gravar_ate_silencio(
-                deve_bloquear=speaker.esta_falando
+            audio, texto_pretranscrito = recorder.gravar_ate_silencio(
+                deve_bloquear=speaker.esta_falando,
+                transcrever_parcial=transcriber.transcrever_audio,
             )
         except Exception as erro:
             _registrar_erro("gravação após wake word", erro)
@@ -234,6 +242,7 @@ def executar_modo_wakeword(
             brain,
             spotify,
             speaker,
+            texto_pretranscrito=texto_pretranscrito,
         )
 
         if not comando_processado:

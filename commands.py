@@ -2,6 +2,7 @@ from ai_router import AIRouter
 from memory_manager import MemoryManager
 from memory_analyzer import MemoryAnalyzer
 import os
+import re
 import threading
 import subprocess
 import webbrowser
@@ -534,9 +535,9 @@ def processar_spotify(texto, spotify):
     )
 
     # Comandos explícitos do aplicativo têm prioridade sobre contexto musical.
-    if fala_de_spotify and any(
-        termo in texto_norm
-        for termo in ("fecha", "feche", "fechar", "encerra", "encerre")
+    if fala_de_spotify and (
+        re.search(r"\bfech(?:a|e|o|ar|ando)?\b", texto_norm)
+        or re.search(r"\bencerr(?:a|e|o|ar|ando)?\b", texto_norm)
     ):
         print("Intenção detectada: fechar Spotify")
         return fechar_spotify()
@@ -911,6 +912,33 @@ def processar_comando_pc(texto):
     return None
 
 
+def responder_fala_social_rapida(texto):
+    """Responde cortesias simples sem gastar uma chamada ao AI Router."""
+    texto_norm = normalizar_texto(texto)
+    texto_norm = re.sub(r"[^\w\s]+", " ", texto_norm)
+    texto_norm = re.sub(r"\s+", " ", texto_norm).strip()
+
+    if texto_norm.endswith(" orion"):
+        texto_norm = texto_norm[:-6].strip()
+
+    respostas = {
+        "obrigado": "De nada.",
+        "obrigada": "De nada.",
+        "muito obrigado": "De nada.",
+        "muito obrigada": "De nada.",
+        "valeu": "Tamo junto.",
+        "brigado": "De nada.",
+        "brigada": "De nada.",
+        "boa noite": "Boa noite.",
+        "bom dia": "Bom dia.",
+        "boa tarde": "Boa tarde.",
+        "ate mais": "Até mais.",
+        "falou": "Falou.",
+    }
+
+    return respostas.get(texto_norm)
+
+
 def processar_texto_usuario(texto, brain, spotify):
     texto = texto.strip()
 
@@ -1118,6 +1146,16 @@ def processar_texto_usuario(texto, brain, spotify):
 
     if resposta_pc:
         return resposta_pc
+
+    # =====================================================
+    # 3.5 CORTESIAS / FALAS SOCIAIS SIMPLES
+    # =====================================================
+
+    resposta_social = responder_fala_social_rapida(texto)
+
+    if resposta_social:
+        print("Fast Router: fala social")
+        return resposta_social
 
     # =====================================================
     # 4. AI ROUTER - LINGUAGEM NATURAL

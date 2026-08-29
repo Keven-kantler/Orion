@@ -1,10 +1,5 @@
-import json
 import re
-import time
 
-import ollama
-
-from config import MODELO_ROUTER
 
 
 SYSTEM_PROMPT_MEMORY = """
@@ -101,8 +96,9 @@ CATEGORIAS_PERMITIDAS = {
 
 class MemoryAnalyzer:
     def __init__(self, cliente_ollama=None):
-        # Permite testes isolados sem alterar a interface usada por commands.py.
-        self._ollama = cliente_ollama or ollama
+        # Mantém a assinatura compatível com versões anteriores.
+        # O analisador automático agora é 100% determinístico e não usa LLM.
+        self._ollama = cliente_ollama
 
     @staticmethod
     def _vazio():
@@ -214,6 +210,38 @@ class MemoryAnalyzer:
         if texto_limpo.endswith("?") or texto_norm.startswith(prefixos_pergunta):
             return self._vazio()
 
+        # Frases conversacionais/comparativas não são memória duradoura.
+        # Ex.: "eu queria comparar com java", "acho que python é melhor aqui".
+        prefixos_conversa = (
+            "eu queria ",
+            "queria ",
+            "eu quero saber ",
+            "quero saber ",
+            "acho que ",
+            "talvez ",
+            "entao ",
+            "então ",
+            "mas ",
+            "e ",
+        )
+
+        termos_conversa = (
+            " comparar ",
+            " comparação ",
+            " comparacao ",
+            " diferença ",
+            " diferenca ",
+            " explicar ",
+            " explicação ",
+            " explicacao ",
+        )
+
+        if (
+            texto_norm.startswith(prefixos_conversa)
+            or any(termo in f" {texto_norm} " for termo in termos_conversa)
+        ):
+            return self._vazio()
+
         prefixos_comando = (
             "toca ",
             "toque ",
@@ -274,127 +302,37 @@ class MemoryAnalyzer:
 
         return None
 
-    @staticmethod
-    def _extrair_json_resposta(resposta):
-        """
-        Centraliza a leitura da resposta para não espalhar suposições
-        sobre o formato retornado pelo cliente Ollama.
-        """
-        try:
-            conteudo = resposta["message"]["content"]
-        except (KeyError, TypeError):
-            return None
-
-        if isinstance(conteudo, dict):
-            return conteudo
-
-        try:
-            dados = json.loads(str(conteudo))
-        except (json.JSONDecodeError, TypeError, ValueError):
-            return None
-
-        return dados if isinstance(dados, dict) else None
-
     def analisar(self, texto):
+        """
+        Analisa memória automática de forma conservadora e determinística.
+
+        Regra principal:
+        - só salva quando a própria fala do usuário corresponde a um padrão
+          explícito de informação duradoura;
+        - perguntas, comandos, conversa casual e frases ambíguas são ignoradas;
+        - não consulta LLM, evitando falsos positivos e competição por RAM/VRAM.
+        """
         texto = str(texto or "").strip()
         vazio = self._vazio()
 
         if not texto:
             return vazio
 
-        # Segurança é aplicada ANTES de qualquer fast-path ou chamada à LLM.
+        # Segurança vem antes de qualquer tentativa de salvar.
         if self._contem_dado_sensivel(texto):
             print("Memory Analyzer: ignorar dado sensível.")
             return vazio
 
-        resultado_deterministico = self._analisar_deterministico(texto)
+        resultado = self._analisar_deterministico(texto)
 
-        if resultado_deterministico is not None:
-            return resultado_deterministico
-
-        inicio = time.perf_counter()
-
-        try:
-            resposta = self._ollama.chat(
-                model=MODELO_ROUTER,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT_MEMORY,
-                    },
-                    {
-                        "role": "user",
-                        "content": texto,
-                    },
-                ],
-                format="json",
-                keep_alive="15m",
-                options={
-                    "temperature": 0.0,
-                    "num_predict": 160,
-                },
-            )
-
-            duracao = time.perf_counter() - inicio
-            dados = self._extrair_json_resposta(resposta)
-
-            if not dados:
-                print(
-                    "Memory Analyzer: resposta inválida "
-                    f"| {duracao:.3f}s"
-                )
-                return vazio
-
-            salvar = self._coagir_bool(
-                dados.get("salvar", False)
-            )
-
-            if not salvar:
-                print(
-                    f"Memory Analyzer: ignorar | {duracao:.3f}s"
-                )
-                return vazio
-
-            categoria = str(
-                dados.get("categoria", "")
-            ).strip().lower()
-
-            if categoria not in CATEGORIAS_PERMITIDAS:
-                categoria = "notas"
-
-            titulo = str(
-                dados.get("titulo", "")
-            ).strip()
-
-            if not titulo:
-                titulo = self._titulo_do_texto(texto)
-
-            # A LLM decide SE vale salvar e em qual categoria, mas o conteúdo
-            # persistido é sempre a própria fala do usuário. Isso impede que
-            # uma reformulação/alucinação do modelo vire "fato" na memória.
-            conteudo = texto
-
-            if self._contem_dado_sensivel(conteudo):
-                print("Memory Analyzer: ignorar dado sensível.")
-                return vazio
-
-            print(
-                "Memory Analyzer: salvar "
-                f"| {categoria} "
-                f"| {titulo} "
-                f"| {duracao:.3f}s"
-            )
-
-            return {
-                "salvar": True,
-                "categoria": categoria,
-                "titulo": titulo,
-                "conteudo": conteudo,
-            }
-
-        except Exception as erro:
-            print(
-                "Erro no Memory Analyzer:",
-                erro,
-            )
+        if not isinstance(resultado, dict) or not resultado.get("salvar"):
+            print("Memory Analyzer: ignorar | determinístico")
             return vazio
+
+        print(
+            "Memory Analyzer: salvar "
+            f"| {resultado['categoria']} "
+            f"| {resultado['titulo']} "
+            "| determinístico"
+        )
+        return resultado
